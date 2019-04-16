@@ -5,64 +5,42 @@ REL_VERSION      = 1.0.0
 REVISION     = 9999
 else
 REL_VERSION  = $(VERSION)
-REVISION = $(BUILD_NUMBER)
+REVISION = $(BLD_NUM)
 endif
 
 NAME=couchbase-lite-log
 VENDOR='Couchbase Inc.'
 INSTALL_PREFIX=/opt/cbl-log
 PACKAGE_DESCRIPTION='The cbl-log Tool'
-URL='http://couchbase.com'
+URL='https://github.com/couchbaselabs/couchbase-mobile-tools/blob/master/README.cbl-log.md'
 POST_UNINSTALL_SCRIPT=cbl-log-post-remove.sh
 
 EXCLUDE_FILES='*logtest'
+LICENSE_FILE=install/LICENSE.txt
+FPM_COMMON_OPTIONS=fpm -s dir \
+		-n $(NAME) \
+		-v $(REL_VERSION) \
+		--prefix $(INSTALL_PREFIX) \
+		--chdir install \
+		--description $(PACKAGE_DESCRIPTION) \
+		--url $(URL) \
+		--license $(LICENSE_FILE) \
+		--vendor $(VENDOR) \
+		--after-remove $(POST_UNINSTALL_SCRIPT) \
+		--exclude $(EXCLUDE_FILES) --debug
 
 .PHONY: package
 package: clean rpm deb1804 deb1604
 
 rpm:
-	fpm -s dir -t rpm -n $(NAME) \
-		-v $(REL_VERSION) \
-		--iteration $(REVISION)_centos7 \
-		--prefix $(INSTALL_PREFIX) \
-		--chdir install \
-		--vendor $(VENDOR) \
-		--description $(PACKAGE_DESCRIPTION) \
-		--url $(URL) \
-		--after-remove $(POST_UNINSTALL_SCRIPT) --debug \
-		--exclude $(EXCLUDE_FILES) \
-		bin lib
+	$(FPM_COMMON_OPTIONS) -t rpm --iteration $(REVISION)_centos7 bin lib
 	mv $(NAME)-$(REL_VERSION)*.rpm $(NAME)-$(REL_VERSION)-$(REVISION)-centos7.x86_64.rpm
 
 deb1804:
-	fpm -s dir -t deb -n $(NAME) \
-		-v $(REL_VERSION) \
-		--iteration $(REVISION)-ubuntu18.04 \
-		--prefix $(INSTALL_PREFIX) \
-		--chdir install \
-		--vendor $(VENDOR) \
-		--description $(PACKAGE_DESCRIPTION) \
-		--url $(URL) \
-		--after-remove $(POST_UNINSTALL_SCRIPT) --debug \
-		--exclude $(EXCLUDE_FILES) \
-		--depends multiarch-support \
-		--depends "libc++-dev >= 3.9" \
-		--depends libc++abi-dev \
-		bin
+	$(FPM_COMMON_OPTIONS) -t deb --iteration $(REVISION)-ubuntu18.04 --depends "libc++1 >= 3.9" --depends libc++abi1 bin
 
 deb1604:
-	fpm -s dir -t deb -n $(NAME) \
-		-v $(REL_VERSION) \
-		--iteration $(REVISION)-ubuntu16.04 \
-		--prefix $(INSTALL_PREFIX) \
-		--chdir install \
-		--vendor $(VENDOR) \
-		--description $(PACKAGE_DESCRIPTION) \
-		--url $(URL) \
-		--after-remove $(POST_UNINSTALL_SCRIPT) --debug \
-		--exclude $(EXCLUDE_FILES) \
-		$(DEB_DEPENDENCY) \
-		bin lib
+	$(FPM_COMMON_OPTIONS) -t deb --iteration $(REVISION)-ubuntu16.04 bin lib
 
 clean: 
 	rm -f $(NAME)*.rpm $(NAME)*.deb
